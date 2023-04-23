@@ -1,8 +1,8 @@
 {
   "name": "yacd",
-  "version": "0.3.5",
+  "version": "0.3.6",
   "description": "Yet another Clash dashboard",
-  "author": "Haishan <haishanhan@gmail.com> (https://haishan.me)",
+  "author": "MetaCubeX (https://github.com/MetaCubeX)",
   "license": "MIT",
   "private": true,
   "keywords": [
