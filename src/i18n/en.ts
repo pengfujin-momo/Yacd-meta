@@ -11,6 +11,7 @@ export const data = {
   'Upload Total': 'Upload Total',
   'Download Total': 'Download Total',
   'Active Connections': 'Active Connections',
+  'Memory Usage': 'Memory Usage',
   'Pause Refresh': 'Pause Refresh',
   'Resume Refresh': 'Resume Refresh',
   close_all_connections: 'Close All Connections',
