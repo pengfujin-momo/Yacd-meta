@@ -21,15 +21,19 @@ type Props = {
   type?: string;
   payload?: string;
   proxy?: string;
+  size?: number;
 };
 
-function Rule({ type, payload, proxy, id }: Props) {
+function Rule({ type, payload, proxy, id, size }: Props) {
   const styleProxy = getStyleFor({ proxy });
   return (
     <div className={s0.rule}>
       <div className={s0.left}>{id}</div>
-      <div>
-        <div className={s0.b}>{payload}</div>
+      <div className={s0.content}>
+        <div className={s0.payloadAndSize}>
+          <div className={s0.payload}>{payload}</div>
+          {type === 'GeoSite' && <div className={s0.size}> : {size}</div>}
+        </div>
         <div className={s0.a}>
           <div className={s0.type}>{type}</div>
           <div style={styleProxy}>{proxy}</div>

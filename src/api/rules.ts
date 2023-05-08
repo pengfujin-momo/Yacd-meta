@@ -11,6 +11,7 @@ type RuleAPIItem = {
   type: string;
   payload: string;
   proxy: string;
+  size: number;
 };
 
 function normalizeAPIResponse(json: { rules: Array<RuleAPIItem> }): Array<RuleItem> {
