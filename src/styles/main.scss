@@ -65,8 +65,6 @@
   --font-mono: 'Roboto Mono', Menlo, monospace;
   // prettier-ignore
   --font-normal: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji",  "Source Han Sans", "PingFang SC", "Microsoft YaHei" , "微软雅黑", Arial,"Twemoji Mozilla", "_Twemoji Mozilla","Segoe UI Emoji", "Segoe UI Symbol";
-  --color-focus-blue: #1a73e8;
-  --btn-bg: #387cec;
 }
 
 body {
@@ -82,7 +80,7 @@ body {
 
     &-thumb {
       border-radius: 5px;
-      background: #3b5f76;
+      background: #306081;
     }
   }
 
@@ -101,13 +99,17 @@ body {
 @mixin dark {
   --color-background: #202020;
   --color-background2: rgba(32, 32, 32, 0.3);
-  --color-bg-card: #2d2d2d;
-  --card-hover-border-lightness: 30%;
+  --color-bg-chart: #24292f;
+  --color-bg-card: #24292f;
+  --color-focus-blue: #306081;
+  --btn-bg: #24292f;
+  --card-hover-border-lightness: #306081;
   --color-text: #ddd;
   --color-text-secondary: #ccc;
   --color-text-highlight: #fff;
-  --color-bg-sidebar: #2d2d30;
-  --color-sb-active-row-bg: #494b4e;
+  --color-bg-sidebar: #24292f;
+  --color-sb-active-row-bg: #30363d;
+  --color-sb-active-row-font: #eee;
   --color-input-bg: #2d2d30;
   --color-input-border: #3f3f3f;
   --color-toggle-bg: #353535;
@@ -116,7 +118,7 @@ body {
   --color-separator: #333;
   --color-btn-bg: #232323;
   --color-btn-fg: #bebebe;
-  --color-bg-proxy: #303030;
+  --color-bg-proxy: #24292f;
   --color-row-odd: #282828;
   --bg-log-info-tag: #454545;
   --bg-modal: #1f1f20;
@@ -131,13 +133,17 @@ body {
 @mixin light {
   --color-background: #eee;
   --color-background2: rgba(240, 240, 240, 0.3);
+  --color-bg-chart: white;
   --color-bg-card: #fafafa;
-  --card-hover-border-lightness: 80%;
+  --color-focus-blue: #24292f;
+  --btn-bg: #24292f;
+  --card-hover-border-lightness: #24292f;
   --color-text: #222;
   --color-text-secondary: #646464;
   --color-text-highlight: #040404;
   --color-bg-sidebar: #f8f8f8;
-  --color-sb-active-row-bg: #d8d8d8;
+  --color-sb-active-row-bg: #24292f;
+  --color-sb-active-row-font: #eee;
   --color-input-bg: #f0f0f0;
   --color-input-border: #c0c0c0;
   --color-toggle-bg: #ffffff;

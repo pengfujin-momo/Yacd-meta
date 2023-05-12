@@ -12,15 +12,24 @@ import {
   memoryChartOptions,
 } from '../misc/chart-memory';
 import { getClashAPIConfig, getSelectedChartStyleIndex } from '../store/app';
+import s0 from './MemoryChart.module.scss';
 import { connect } from './StateProvider';
 
 const { useMemo } = React;
 
 const chartWrapperStyle = {
   // make chartjs chart responsive
+  justifySelf: 'center',
   position: 'relative',
-  maxWidth: 1000,
-  marginTop: '1em',
+  width: '100%',
+  height: '200px',
+  borderTop: '2px solid #30363d',
+};
+
+const canvasWrapperStyle = {
+  width: '100%',
+  height: '100%',
+  padding: '10px',
 };
 
 const mapState = (s: State) => ({
@@ -55,7 +64,7 @@ function MemoryChart({ apiConfig, selectedChartStyleIndex }) {
   return (
     // @ts-expect-error ts-migrate(2322) FIXME: Type '{ position: string; maxWidth: number; }' is ... Remove this comment to see the full error message
     <div style={chartWrapperStyle}>
-      <canvas id="MemoryChart" />
+      <canvas id="MemoryChart" style={canvasWrapperStyle} className={s0.TrafficChart} />
     </div>
   );
 }

@@ -36,7 +36,7 @@
     transition: transform 0.2s ease-in-out;
     cursor: pointer;
     &:hover {
-      border-color: hsl(0deg, 0%, var(--card-hover-border-lightness));
+      border-color: var(--card-hover-border-lightness);
     }
   }
 }
@@ -62,13 +62,15 @@
 .row {
   display: flex;
   align-items: center;
+  height: auto;
+  font-weight: 400;
   justify-content: space-between;
 }
 
 .proxyName {
   width: 100%;
   margin-bottom: 5px;
-  font-size: 0.85em;
+  font-size: 0.75em;
   @media (--breakpoint-not-small) {
     font-size: 0.85em;
   }
@@ -76,8 +78,8 @@
 
 .proxySmall {
   position: relative;
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
 
   .now {
