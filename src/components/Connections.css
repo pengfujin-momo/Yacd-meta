@@ -31,7 +31,7 @@
 }
 
 .react-tabs__tab:focus {
-  border-color: hsl(208, 99%, 50%);
+  border-color: var(--color-focus-blue);
   outline: none;
 }
 

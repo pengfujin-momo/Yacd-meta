@@ -15,9 +15,9 @@
 }
 
 .input:focus + .cnt {
-  border-color: #387cec;
+  border-color: var(--color-focus-blue);
 }
 
 .input:checked + .cnt {
-  border-color: #387cec;
+  border-color: var(--color-focus-blue);
 }

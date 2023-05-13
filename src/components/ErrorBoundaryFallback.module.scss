@@ -28,7 +28,7 @@
   color: var(--color-text-secondary);
   &:hover,
   &:active {
-    color: #387cec;
+    color: var(--color-focus-blue);
   }
 
   svg {
