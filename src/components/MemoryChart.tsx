@@ -22,13 +22,14 @@ const chartWrapperStyle = {
   justifySelf: 'center',
   position: 'relative',
   width: '100%',
-  borderTop: '2px solid #30363d',
+  height: '100%',
 };
 
 const canvasWrapperStyle = {
   width: '100%',
   height: '100%',
   padding: '10px',
+  borderRadius: '10px',
 };
 
 const mapState = (s: State) => ({

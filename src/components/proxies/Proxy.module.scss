@@ -10,7 +10,7 @@
   flex-direction: column;
   justify-content: space-between;
 
-  outline: none;
+  outline: var(--color-proxy-border) 1px outset;
   border: 2px solid transparent;
 
   &:focus {
@@ -78,28 +78,28 @@
 
 .proxySmall {
   position: relative;
-  width: 10px;
-  height: 10px;
+  width: 13px;
+  height: 13px;
   border-radius: 50%;
 
   .now {
     position: absolute;
-    width: 6px;
-    height: 6px;
+    width: 8px;
+    height: 8px;
     margin: auto;
     top: 0;
     right: 0;
     bottom: 0;
     left: 0;
     border-radius: 50%;
-    background-color: white;
+    background-color: rgb(255, 253, 253);
   }
 
   &.selectable {
     transition: transform 0.1s ease-in-out;
     cursor: pointer;
     &:hover {
-      transform: scale(1.2);
+      transform: scale(1.5);
     }
   }
 }
