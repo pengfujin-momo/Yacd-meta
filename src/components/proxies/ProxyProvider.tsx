@@ -131,14 +131,13 @@ function ProxyProviderImpl({
           />
         </div>
       </div>
-      {subscriptionInfo && (
-        <div className={s.updatedAt}>
+      <div className={s.updatedAt}>
+        {subscriptionInfo && (
           <small>
             {used} / {total} ( {percentage}% ) &nbsp;&nbsp; Expire: {expireStr()}{' '}
           </small>
-        </div>
-      )}
-      <div className={s.updatedAt}>
+        )}
+        <br />
         <small>Updated {timeAgo} ago</small>
       </div>
       {/* @ts-expect-error ts-migrate(2322) FIXME: Type '{ children: Element[]; isOpen: boolean; }' i... Remove this comment to see the full error message */}
