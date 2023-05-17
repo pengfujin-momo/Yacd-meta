@@ -9,6 +9,8 @@ import { Link, useLocation } from 'react-router-dom';
 
 import { fetchVersion } from '~/api/version';
 import { ThemeSwitcher } from '~/components/shared/ThemeSwitcher';
+import { connect } from '~/components/StateProvider';
+import { getClashAPIConfig } from '~/store/app';
 import { ClashAPIConfig } from '~/types';
 
 import s from './SideBar.module.scss';
@@ -80,9 +82,16 @@ const pages = [
   },
 ];
 
-export default function SideBar(props: Props) {
+const mapState = (s) => ({
+  apiConfig: getClashAPIConfig(s),
+});
+
+export default connect(mapState)(SideBar);
+
+function SideBar(props: Props) {
   const { t } = useTranslation();
   const location = useLocation();
+
   const { data: version } = useQuery(['/version', props.apiConfig], () =>
     fetchVersion('/version', props.apiConfig)
   );
