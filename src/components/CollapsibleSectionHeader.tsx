@@ -1,8 +1,5 @@
-import cx from 'clsx';
 import * as React from 'react';
-import { ChevronDown } from 'react-feather';
 
-import Button from './Button';
 import s from './CollapsibleSectionHeader.module.scss';
 import { SectionNameType } from './shared/Basic';
 
@@ -14,7 +11,7 @@ type Props = {
   isOpen?: boolean;
 };
 
-export default function Header({ name, type, toggle, isOpen, qty }: Props) {
+export default function Header({ name, type, toggle, qty }: Props) {
   const handleKeyDown = React.useCallback(
     (e: React.KeyboardEvent) => {
       e.preventDefault();
@@ -38,12 +35,6 @@ export default function Header({ name, type, toggle, isOpen, qty }: Props) {
       </div>
 
       {typeof qty === 'number' ? <span className={s.qty}>{qty}</span> : null}
-
-      <Button kind="minimal" onClick={toggle} className={s.btn} title="Toggle collapsible section">
-        <span className={cx(s.arrow, { [s.isOpen]: isOpen })}>
-          <ChevronDown size={20} />
-        </span>
-      </Button>
     </div>
   );
 }

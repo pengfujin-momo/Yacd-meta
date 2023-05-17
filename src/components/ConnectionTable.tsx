@@ -1,6 +1,6 @@
 import cx from 'clsx';
 import { formatDistance, Locale } from 'date-fns';
-import { enUS, zhCN } from 'date-fns/locale';
+import { enUS, zhCN, zhTW } from 'date-fns/locale';
 import React from 'react';
 import { ChevronDown } from 'react-feather';
 import { useTranslation } from 'react-i18next';
@@ -64,7 +64,16 @@ function Table({ data }) {
   );
 
   const { t, i18n } = useTranslation();
-  const locale = i18n.language === 'zh' ? zhCN : enUS;
+
+  let locale: Locale;
+
+  if (i18n.language === 'zh-cn') {
+    locale = zhCN;
+  } else if (i18n.language === 'zh-tw') {
+    locale = zhTW;
+  } else {
+    locale = enUS;
+  }
 
   return (
     <div {...getTableProps()}>

@@ -1,11 +1,13 @@
+import cx from 'clsx';
 import { formatDistance } from 'date-fns';
 import * as React from 'react';
-import { RotateCw, Zap } from 'react-feather';
+import { ChevronDown, RotateCw, Zap } from 'react-feather';
 
 import Button from '~/components/Button';
 import Collapsible from '~/components/Collapsible';
 import CollapsibleSectionHeader from '~/components/CollapsibleSectionHeader';
 import { useUpdateProviderItem } from '~/components/proxies/proxies.hooks';
+import s0 from '~/components/proxies/ProxyGroup.module.scss';
 import { connect, useStoreActions } from '~/components/StateProvider';
 import { framerMotionResouce } from '~/misc/motion';
 import {
@@ -94,7 +96,14 @@ function ProxyProviderImpl({
   };
   return (
     <div className={s.body}>
-      <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          justifyContent: 'space-between',
+        }}
+      >
         <CollapsibleSectionHeader
           name={name}
           toggle={toggle}
@@ -102,22 +111,33 @@ function ProxyProviderImpl({
           isOpen={isOpen}
           qty={proxies.length}
         />
-        <Button kind="minimal" start={<Refresh />} onClick={updateProvider} />
-        <Button
-          kind="minimal"
-          start={<Zap size={16} />}
-          onClick={healthcheckProvider}
-          isLoading={isHealthcheckLoading}
-        />
+        <div style={{ display: 'flex' }}>
+          <Button
+            kind="minimal"
+            onClick={toggle}
+            className={s0.btn}
+            title="Toggle collapsible section"
+          >
+            <span className={cx(s0.arrow, { [s0.isOpen]: isOpen })}>
+              <ChevronDown size={20} />
+            </span>
+          </Button>
+          <Button kind="minimal" start={<Refresh />} onClick={updateProvider} />
+          <Button
+            kind="minimal"
+            start={<Zap size={16} />}
+            onClick={healthcheckProvider}
+            isLoading={isHealthcheckLoading}
+          />
+        </div>
       </div>
-      {subscriptionInfo && (
-        <div className={s.updatedAt}>
+      <div className={s.updatedAt}>
+        {subscriptionInfo && (
           <small>
             {used} / {total} ( {percentage}% ) &nbsp;&nbsp; Expire: {expireStr()}{' '}
           </small>
-        </div>
-      )}
-      <div className={s.updatedAt}>
+        )}
+        <br />
         <small>Updated {timeAgo} ago</small>
       </div>
       {/* @ts-expect-error ts-migrate(2322) FIXME: Type '{ children: Element[]; isOpen: boolean; }' i... Remove this comment to see the full error message */}
