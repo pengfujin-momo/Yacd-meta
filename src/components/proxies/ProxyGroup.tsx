@@ -1,5 +1,6 @@
+import cx from 'clsx';
 import * as React from 'react';
-import { Zap } from 'react-feather';
+import { ChevronDown, Zap } from 'react-feather';
 import { useQuery } from 'react-query';
 
 import * as proxiesAPI from '~/api/proxies';
@@ -87,22 +88,28 @@ function ProxyGroupImpl({
 
   return (
     <div className={s0.group}>
-      <div style={{ display: 'flex', alignItems: 'center' }}>
-        <CollapsibleSectionHeader
-          name={name}
-          type={type}
-          toggle={toggle}
-          qty={all.length}
-          isOpen={isOpen}
-        />
-        <Button
-          title="Test latency"
-          kind="minimal"
-          onClick={testLatency}
-          isLoading={isTestingLatency}
-        >
-          <ZapWrapper />
-        </Button>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <CollapsibleSectionHeader name={name} type={type} toggle={toggle} qty={all.length} />
+        <div style={{ display: 'flex' }}>
+          <Button
+            title="Test latency"
+            kind="minimal"
+            onClick={testLatency}
+            isLoading={isTestingLatency}
+          >
+            <ZapWrapper />
+          </Button>
+          <Button
+            kind="minimal"
+            onClick={toggle}
+            className={s0.btn}
+            title="Toggle collapsible section"
+          >
+            <span className={cx(s0.arrow, { [s0.isOpen]: isOpen })}>
+              <ChevronDown size={20} />
+            </span>
+          </Button>
+        </div>
       </div>
       {createElement(isOpen ? ProxyList : ProxyListSummaryView, {
         all,

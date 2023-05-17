@@ -16,3 +16,17 @@
   align-items: center;
   justify-content: center;
 }
+
+.arrow {
+  display: inline-flex;
+  transform: rotate(0deg);
+  transition: transform 0.3s;
+
+  &.isOpen {
+    transform: rotate(180deg);
+  }
+
+  &:focus {
+    outline: var(--color-focus-blue) solid 1px;
+  }
+}
