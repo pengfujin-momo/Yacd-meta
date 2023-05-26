@@ -4,7 +4,7 @@ on:
   push:
     paths-ignore:
       - 'ui-update/**'
-
+      - '.github/workflows/ui_update.yml'
 
 env:
   APP_NAME: yacd-meta
