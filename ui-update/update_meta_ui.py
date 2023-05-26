@@ -67,9 +67,9 @@ while True:
                         except Exception as e:
                             print(f'[{datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d %H:%M:%S")}] 删除"{file_path}"时发生错误: {e}')
                 
-                renamed_dir = os.path.join(tmpdir, target_directory)
-                os.rename(extracted_dir, renamed_dir)
-                shutil.move(renamed_dir, target_directory)
+
+                for file in os.listdir(extracted_dir):
+                    shutil.move(os.path.join(extracted_dir, file), os.path.join(target_directory, file))
                 print(f'[{datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d %H:%M:%S")}] 成功更新本地版本！')
 
         except Exception as e:
