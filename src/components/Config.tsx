@@ -233,7 +233,8 @@ function ConfigImpl({
     <div>
       <ContentHeader title={t('Config')} />
       <div className={s0.root}>
-        {portFields.map((f) =>
+        {(version.meta && version.premium) || (
+          portFields.map((f) =>
           configState[f.key] !== undefined ? (
             <div key={f.key}>
               <div className={s0.label}>{f.label}</div>
@@ -245,6 +246,7 @@ function ConfigImpl({
               />
             </div>
           ) : null
+        )
         )}
 
         <div>
@@ -265,19 +267,22 @@ function ConfigImpl({
           />
         </div>
 
-        <div>
-          <div className={s0.label}>{t('allow_lan')}</div>
-          <div className={s0.wrapSwitch}>
-            <Switch
-              name="allow-lan"
-              checked={configState['allow-lan']}
-              onChange={(value: boolean) =>
-                handleInputOnChange({ name: 'allow-lan', value: value })
-              }
-            />
+        {(version.meta && version.premium) || (
+          <div>
+            <div className={s0.label}>{t('allow_lan')}</div>
+            <div className={s0.wrapSwitch}>
+              <Switch
+                name="allow-lan"
+                checked={configState['allow-lan']}
+                onChange={(value: boolean) =>
+                  handleInputOnChange({ name: 'allow-lan', value: value })
+                }
+              />
+            </div>
           </div>
-        </div>
-        {version.meta && (
+        )}
+
+        {(version.meta && !version.premium) && (
           <div>
             <div className={s0.label}>{t('tls_sniffing')}</div>
             <div className={s0.wrapSwitch}>
@@ -297,46 +302,50 @@ function ConfigImpl({
       </div>
       {version.meta && (
         <>
-          <div className={s0.section}>
+          {version.premium || (
             <div>
-              <div className={s0.label}>{t('enable_tun_device')}</div>
-              <div className={s0.wrapSwitch}>
-                <Switch
-                  checked={configState['tun']?.enable}
-                  onChange={(value: boolean) =>
-                    handleInputOnChange({ name: 'enable', value: value })
-                  }
-                />
+              <div className={s0.section}>
+                <div>
+                  <div className={s0.label}>{t('enable_tun_device')}</div>
+                  <div className={s0.wrapSwitch}>
+                    <Switch
+                      checked={configState['tun']?.enable}
+                      onChange={(value: boolean) =>
+                        handleInputOnChange({ name: 'enable', value: value })
+                      }
+                    />
+                  </div>
+                </div>
+                <div>
+                  <div className={s0.label}>TUN IP Stack</div>
+                  <Select
+                    options={tunStackOptions}
+                    selected={configState.tun?.stack?.toLowerCase()}
+                    onChange={(e) => handleInputOnChange({ name: 'stack', value: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <div className={s0.label}>Device Name</div>
+                  <Input
+                    name="device name"
+                    value={configState.tun?.device}
+                    onChange={handleInputOnBlur}
+                  />
+                </div>
+                <div>
+                  <div className={s0.label}>Interface Name</div>
+                  <Input
+                    name="interface name"
+                    value={configState['interface-name'] || ''}
+                    onChange={handleInputOnBlur}
+                  />
+                </div>
+              </div>
+              <div className={s0.sep}>
+                <div />
               </div>
             </div>
-            <div>
-              <div className={s0.label}>TUN IP Stack</div>
-              <Select
-                options={tunStackOptions}
-                selected={configState.tun?.stack?.toLowerCase()}
-                onChange={(e) => handleInputOnChange({ name: 'stack', value: e.target.value })}
-              />
-            </div>
-            <div>
-              <div className={s0.label}>Device Name</div>
-              <Input
-                name="device name"
-                value={configState.tun?.device}
-                onChange={handleInputOnBlur}
-              />
-            </div>
-            <div>
-              <div className={s0.label}>Interface Name</div>
-              <Input
-                name="interface name"
-                value={configState['interface-name'] || ''}
-                onChange={handleInputOnBlur}
-              />
-            </div>
-          </div>
-          <div className={s0.sep}>
-            <div />
-          </div>
+          )}
           <div className={s0.section}>
             <div>
               <div className={s0.label}>Reload</div>
@@ -346,14 +355,16 @@ function ConfigImpl({
                 onClick={handleReloadConfigFile}
               />
             </div>
-            <div>
-              <div className={s0.label}>GEO Databases</div>
-              <Button
-                start={<DownloadCloud size={16} />}
-                label={t('update_geo_databases_file')}
-                onClick={handleUpdateGeoDatabasesFile}
-              />
-            </div>
+            {(version.meta && !version.premium) && (
+              <div>
+                <div className={s0.label}>GEO Databases</div>
+                <Button
+                  start={<DownloadCloud size={16} />}
+                  label={t('update_geo_databases_file')}
+                  onClick={handleUpdateGeoDatabasesFile}
+                />
+              </div>
+            )}
             <div>
               <div className={s0.label}>FakeIP</div>
               <Button
@@ -362,22 +373,26 @@ function ConfigImpl({
                 onClick={handleFlushFakeIPPool}
               />
             </div>
-            <div>
-              <div className={s0.label}>Restart</div>
-              <Button
-                start={<RotateCw size={16} />}
-                label={t('restart_core')}
-                onClick={handleRestartCore}
-              />
-            </div>
-            <div>
-              <div className={s0.label}>⚠️ Upgrade ⚠️</div>
-              <Button
-                start={<RotateCw size={16} />}
-                label={t('upgrade_core')}
-                onClick={handleUpgradeCore}
-              />
-            </div>
+            {(version.meta && !version.premium) && (
+              <div>
+                <div className={s0.label}>Restart</div>
+                <Button
+                  start={<RotateCw size={16} />}
+                  label={t('restart_core')}
+                  onClick={handleRestartCore}
+                />
+              </div>
+            )}
+            {(version.meta && !version.premium) && (
+              <div>
+                <div className={s0.label}>⚠️ Upgrade ⚠️</div>
+                <Button
+                  start={<RotateCw size={16} />}
+                  label={t('upgrade_core')}
+                  onClick={handleUpgradeCore}
+                />
+              </div>
+            )}
           </div>
           <div className={s0.sep}>
             <div />
