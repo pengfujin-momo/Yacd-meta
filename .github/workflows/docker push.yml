@@ -1,7 +1,10 @@
 name: Docker Push all_platforms
 
 on:
-  push: 
+  push:
+    paths-ignore:
+      - 'ui-update/**'
+
 
 env:
   APP_NAME: yacd-meta
