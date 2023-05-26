@@ -2,8 +2,8 @@ name: Docker Push update ui
 
 on:
   push:
-    paths:
-      - 'ui-update/**'
+    # paths:
+    #   - 'ui-update/**'
 
 
 env:
