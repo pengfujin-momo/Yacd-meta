@@ -6,6 +6,7 @@
   justify-content: center;
   color: var(--color-background);
   opacity: 0.1;
+
   @media (max-width: 768px) {
     margin-top: 35%;
   }
@@ -33,6 +34,7 @@
    * we need to apply some right padding to this container then
    */
   padding-right: 15px;
+
   @media (--breakpoint-not-small) {
     padding-right: 25px;
   }
@@ -40,6 +42,7 @@
 
 .inputWrapper {
   margin: 0;
+
   @media (--breakpoint-not-small) {
     margin: 0 25px;
   }

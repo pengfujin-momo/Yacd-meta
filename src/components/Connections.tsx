@@ -1,26 +1,34 @@
 import './Connections.css';
 
 import React from 'react';
-import { Pause, Play, X as IconClose } from 'react-feather';
+import { Pause, Play, RefreshCcw, Settings, Tag, X as IconClose } from 'react-feather';
 import { useTranslation } from 'react-i18next';
 import { Tab, TabList, TabPanel, Tabs } from 'react-tabs';
 
 import { ConnectionItem } from '~/api/connections';
+import Select from '~/components/shared/Select';
 import { State } from '~/store/types';
 
 import * as connAPI from '../api/connections';
 import useRemainingViewPortHeight from '../hooks/useRemainingViewPortHeight';
 import { getClashAPIConfig } from '../store/app';
-import Button from './Button';
 import s from './Connections.module.scss';
 import ConnectionTable from './ConnectionTable';
 import ContentHeader from './ContentHeader';
+import Input from './Input';
 import ModalCloseAllConnections from './ModalCloseAllConnections';
+import ModalManageConnectionColumns from './ModalManageConnectionColumns';
+import ModalSourceIP from './ModalSourceIP';
 import { Action, Fab, position as fabPosition } from './shared/Fab';
 import { connect } from './StateProvider';
 import SvgYacd from './SvgYacd';
 
 const { useEffect, useState, useRef, useCallback } = React;
+const ALL_SOURCE_IP = 'ALL_SOURCE_IP';
+
+const sourceMapInit = localStorage.getItem('sourceMap')
+  ? JSON.parse(localStorage.getItem('sourceMap'))
+  : [];
 
 const paddingBottom = 30;
 
@@ -82,21 +90,44 @@ function filterConns(conns: FormattedConn[], keyword: string, sourceIp: string) 
       })
     );
   }
-  if (sourceIp !== '') {
+  if (sourceIp !== ALL_SOURCE_IP) {
     result = filterConnIps(result, sourceIp);
   }
 
   return result;
 }
 
-function getConnIpList(conns: FormattedConn[]) {
-  return Array.from(new Set(conns.map((x) => x.sourceIP))).sort();
+function getNameFromSource(
+  source: string,
+  sourceMap: { reg: string; name: string }[],
+  defaultVal?: string
+): string {
+  let sourceName = defaultVal ?? source;
+
+  sourceMap.forEach(({ reg, name }) => {
+    if (!reg) return;
+
+    if (reg.startsWith('/')) {
+      const regExp = new RegExp(reg.replace('/', ''), 'g');
+
+      if (regExp.test(source) && name) {
+        sourceName = `${name}(${source})`;
+      }
+    } else {
+      if (source === reg && name) {
+        sourceName = `${name}(${source})`;
+      }
+    }
+  });
+
+  return sourceName;
 }
 
 function formatConnectionDataItem(
   i: ConnectionItem,
   prevKv: Record<string, { upload: number; download: number }>,
-  now: number
+  now: number,
+  sourceMap: { reg: string; name: string }[]
 ): FormattedConn {
   const { id, metadata, upload, download, start, chains, rule, rulePayload } = i;
   const {
@@ -115,6 +146,8 @@ function formatConnectionDataItem(
   let host2 = host;
   if (host2 === '') host2 = destinationIP;
   const prev = prevKv[id];
+  const source = `${sourceIP}:${sourcePort}`;
+
   const ret = {
     id,
     upload,
@@ -126,7 +159,7 @@ function formatConnectionDataItem(
     host: `${host2}:${destinationPort}`,
     sniffHost: sniffHost ? sniffHost : '-',
     type: `${type}(${network})`,
-    source: `${sourceIP}:${sourcePort}`,
+    source: getNameFromSource(sourceIP, sourceMap, source),
     downloadSpeedCurr: download - (prev ? prev.download : 0),
     uploadSpeedCurr: upload - (prev ? prev.upload : 0),
     process: process ? process : '-',
@@ -145,17 +178,17 @@ function modifyChains(chains: string[]): string {
 
   //倒序
   if (chains.length === 2) {
-    return chains[1] + ' / ' + chains[0];
+    return `${chains[1]} -> ${chains[0]}`;
   }
 
   const first = chains.pop();
   const last = chains.shift();
-  return `${first} / ${last}`;
+  return `${first} -> ${last}`;
 }
 
-function renderTableOrPlaceholder(conns: FormattedConn[]) {
+function renderTableOrPlaceholder(columns, hiddenColumns, conns: FormattedConn[]) {
   return conns.length > 0 ? (
-    <ConnectionTable data={conns} />
+    <ConnectionTable data={conns} columns={columns} hiddenColumns={hiddenColumns} />
   ) : (
     <div className={s.placeHolder}>
       <SvgYacd width={200} height={200} c1="var(--color-text)" />
@@ -167,21 +200,103 @@ function ConnQty({ qty }) {
   return qty < 100 ? '' + qty : '99+';
 }
 
+const sortDescFirst = true;
+const hiddenColumnsOrigin = ['id'];
+const columnsOrigin = [
+  { accessor: 'id', show: false },
+  { Header: 'c_type', accessor: 'type' },
+  { Header: 'c_process', accessor: 'process' },
+  { Header: 'c_host', accessor: 'host' },
+  { Header: 'c_rule', accessor: 'rule' },
+  { Header: 'c_chains', accessor: 'chains' },
+  { Header: 'c_time', accessor: 'start' },
+  { Header: 'c_dl_speed', accessor: 'downloadSpeedCurr', sortDescFirst },
+  { Header: 'c_ul_speed', accessor: 'uploadSpeedCurr', sortDescFirst },
+  { Header: 'c_dl', accessor: 'download', sortDescFirst },
+  { Header: 'c_ul', accessor: 'upload', sortDescFirst },
+  { Header: 'c_source', accessor: 'source' },
+  { Header: 'c_destination_ip', accessor: 'destinationIP' },
+  { Header: 'c_sni', accessor: 'sniffHost' },
+  { Header: 'c_ctrl', accessor: 'ctrl' },
+];
+
+const savedHiddenColumns = localStorage.getItem('hiddenColumns');
+const savedColumns = localStorage.getItem('columns');
+
+const hiddenColumnsInit = savedHiddenColumns
+  ? JSON.parse(savedHiddenColumns)
+  : [...hiddenColumnsOrigin];
+
+const columnOrder = savedColumns ? JSON.parse(savedColumns) : null;
+const columnsInit = columnOrder
+  ? [...columnsOrigin].sort((pre, next) => {
+      const preIdx = columnOrder.findIndex((column) => column.accessor === pre.accessor);
+      const nextIdx = columnOrder.findIndex((column) => column.accessor === next.accessor);
+
+      if (preIdx === -1) {
+        return 1;
+      }
+
+      if (nextIdx === -1) {
+        return -1;
+      }
+      return preIdx - nextIdx;
+    })
+  : [...columnsOrigin];
+
 function Conn({ apiConfig }) {
+  const { t } = useTranslation();
+  const [showModalColumn, setModalColumn] = useState(false);
+  const [hiddenColumns, setHiddenColumns] = useState(hiddenColumnsInit);
+  const [columns, setColumns] = useState(columnsInit);
+
+  const closeModalColumn = () => {
+    setModalColumn(false);
+  };
+
+  const resetColumns = () => {
+    setHiddenColumns([...hiddenColumnsOrigin]);
+    setColumns([...columnsOrigin]);
+    localStorage.removeItem('hiddenColumns');
+    localStorage.removeItem('columns');
+  };
+
+  const [sourceMapModal, setSourceMapModal] = useState(false);
+  const [sourceMap, setSourceMap] = useState(sourceMapInit);
   const [refContainer, containerHeight] = useRemainingViewPortHeight();
 
   const [conns, setConns] = useState([]);
   const [closedConns, setClosedConns] = useState([]);
 
   const [filterKeyword, setFilterKeyword] = useState('');
-  const [filterSourceIpStr, setFilterSourceIpStr] = useState('');
+  const [filterSourceIpStr, setFilterSourceIpStr] = useState(ALL_SOURCE_IP);
 
   const filteredConns = filterConns(conns, filterKeyword, filterSourceIpStr);
   const filteredClosedConns = filterConns(closedConns, filterKeyword, filterSourceIpStr);
 
+  const getConnIpList = (conns: FormattedConn[]) => {
+    return [
+      [ALL_SOURCE_IP, t('All')],
+      ...Array.from(new Set(conns.map((x) => x.sourceIP)))
+        .sort()
+        .map((value) => {
+          return [value, getNameFromSource(value, sourceMap).trim() || t('internel')];
+        }),
+    ];
+  };
   const connIpSet = getConnIpList(conns);
-  const ClosedConnIpSet = getConnIpList(closedConns);
+  // const ClosedConnIpSet = getConnIpList(closedConns);
 
+  const [isCloseFilterModalOpen, setIsCloseFilterModalOpen] = useState(false);
+  const openCloseFilterModal = useCallback(() => setIsCloseFilterModalOpen(true), []);
+  const closeCloseFilterModal = useCallback(() => setIsCloseFilterModalOpen(false), []);
+
+  const closeFilterConnections = useCallback(async () => {
+    for (const connection of filteredConns) {
+      await connAPI.closeConnById(apiConfig, connection.id);
+    }
+    closeCloseFilterModal();
+  }, [apiConfig, filteredConns, closeCloseFilterModal]);
   const [isCloseAllModalOpen, setIsCloseAllModalOpen] = useState(false);
   const openCloseAllModal = useCallback(() => setIsCloseAllModalOpen(true), []);
   const closeCloseAllModal = useCallback(() => setIsCloseAllModalOpen(false), []);
@@ -199,7 +314,7 @@ function Conn({ apiConfig }) {
       const prevConnsKv = arrayToIdKv(prevConnsRef.current);
       const now = Date.now();
       const x = connections.map((c: ConnectionItem) =>
-        formatConnectionDataItem(c, prevConnsKv, now)
+        formatConnectionDataItem(c, prevConnsKv, now, sourceMap)
       );
       const closed = [];
       for (const c of prevConnsRef.current) {
@@ -219,7 +334,7 @@ function Conn({ apiConfig }) {
         prevConnsRef.current = x;
       }
     },
-    [setConns, isRefreshPaused]
+    [setConns, sourceMap, isRefreshPaused]
   );
   const [reConnectCount, setReConnectCount] = useState(0);
 
@@ -231,14 +346,27 @@ function Conn({ apiConfig }) {
     });
   }, [apiConfig, read, reConnectCount, setReConnectCount]);
 
-  const { t } = useTranslation();
+  const openModalSource = () => {
+    if (sourceMap.length === 0) {
+      sourceMap.push({
+        reg: '',
+        name: '',
+      });
+    }
+    setSourceMapModal(true);
+  };
+  const closeModalSource = () => {
+    setSourceMap(sourceMap.filter((i) => i.reg || i.name));
+    localStorage.setItem('sourceMap', JSON.stringify(sourceMap));
+    setSourceMapModal(false);
+  };
 
   return (
     <div>
       <div className={s.header}>
         <ContentHeader title={t('Connections')} />
         <div className={s.inputWrapper}>
-          <input
+          <Input
             type="text"
             name="filter"
             autoComplete="off"
@@ -253,10 +381,15 @@ function Conn({ apiConfig }) {
           style={{
             display: 'flex',
             flexWrap: 'wrap',
-            justifyContent: 'space-between',
+            paddingLeft: '30px',
+            justifyContent: 'flex-start',
           }}
         >
-          <TabList>
+          <TabList
+            style={{
+              padding: '0 15px 0 0',
+            }}
+          >
             <Tab>
               <span>{t('Active')}</span>
               <span className={s.connQty}>
@@ -272,6 +405,12 @@ function Conn({ apiConfig }) {
               </span>
             </Tab>
           </TabList>
+          <Select
+            options={connIpSet}
+            selected={filterSourceIpStr}
+            style={{ width: 'unset' }}
+            onChange={(e) => setFilterSourceIpStr(e.target.value)}
+          />
         </div>
         <div ref={refContainer} style={{ padding: 30, paddingBottom: 10, paddingTop: 10 }}>
           <div
@@ -281,17 +420,7 @@ function Conn({ apiConfig }) {
             }}
           >
             <TabPanel>
-              <Button onClick={() => setFilterSourceIpStr('')} kind="minimal">
-                {t('All')}
-              </Button>
-              {connIpSet.map((value, k) => {
-                return (
-                  <Button key={k} onClick={() => setFilterSourceIpStr(value)} kind="minimal">
-                    {value}
-                  </Button>
-                );
-              })}
-              {renderTableOrPlaceholder(filteredConns)}
+              {renderTableOrPlaceholder(columns, hiddenColumns, filteredConns)}
               <Fab
                 icon={isRefreshPaused ? <Play size={16} /> : <Pause size={16} />}
                 mainButtonStyles={isRefreshPaused ? { background: '#e74c3c' } : {}}
@@ -302,20 +431,35 @@ function Conn({ apiConfig }) {
                 <Action text={t('close_all_connections')} onClick={openCloseAllModal}>
                   <IconClose size={10} />
                 </Action>
+                <Action text={t('close_filter_connections')} onClick={openCloseFilterModal}>
+                  <IconClose size={10} />
+                </Action>
+                <Action text={t('manage_column')} onClick={() => setModalColumn(true)}>
+                  <Settings size={10} />
+                </Action>
+                <Action text={t('reset_column')} onClick={resetColumns}>
+                  <RefreshCcw size={10} />
+                </Action>
+                <Action text={t('client_tag')} onClick={openModalSource}>
+                  <Tag size={10} />
+                </Action>
               </Fab>
             </TabPanel>
             <TabPanel>
-              <Button onClick={() => setFilterSourceIpStr('')} kind="minimal">
-                {t('All')}
-              </Button>
-              {ClosedConnIpSet.map((value, k) => {
-                return (
-                  <Button key={k} onClick={() => setFilterSourceIpStr(value)} kind="minimal">
-                    {value}
-                  </Button>
-                );
-              })}
-              {renderTableOrPlaceholder(filteredClosedConns)}
+              {renderTableOrPlaceholder(columns, hiddenColumns, filteredClosedConns)}
+              <Fab
+                icon={<Settings size={16} />}
+                style={fabPosition}
+                text={t('manage_column')}
+                onClick={() => setModalColumn(true)}
+              >
+                <Action text={t('reset_column')} onClick={resetColumns}>
+                  <RefreshCcw size={10} />
+                </Action>
+                <Action text={t('client_tag')} onClick={openModalSource}>
+                  <Tag size={10} />
+                </Action>
+              </Fab>
             </TabPanel>
           </div>
         </div>
@@ -323,6 +467,26 @@ function Conn({ apiConfig }) {
           isOpen={isCloseAllModalOpen}
           primaryButtonOnTap={closeAllConnections}
           onRequestClose={closeCloseAllModal}
+        />
+        <ModalCloseAllConnections
+          confirm={'close_filter_connections'}
+          isOpen={isCloseFilterModalOpen}
+          primaryButtonOnTap={closeFilterConnections}
+          onRequestClose={closeCloseFilterModal}
+        />
+        <ModalManageConnectionColumns
+          isOpen={showModalColumn}
+          onRequestClose={closeModalColumn}
+          columns={columns}
+          hiddenColumns={hiddenColumns}
+          setColumns={setColumns}
+          setHiddenColumns={setHiddenColumns}
+        />
+        <ModalSourceIP
+          isOpen={sourceMapModal}
+          onRequestClose={closeModalSource}
+          sourceMap={sourceMap}
+          setSourceMap={setSourceMap}
         />
       </Tabs>
     </div>

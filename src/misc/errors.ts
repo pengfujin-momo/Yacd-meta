@@ -6,7 +6,7 @@ export const errors = {
     detail: 'This browser does not support "fetch", please choose another one.',
   },
   default: {
-    message: 'Oops, something went wrong!',
+    message: '出错了!\n 请尝试清理缓存和Cookie后重试',
   },
 };
 

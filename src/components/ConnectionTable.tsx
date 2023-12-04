@@ -1,59 +1,36 @@
+import './ConnectionTable.scss';
+
 import cx from 'clsx';
 import { formatDistance, Locale } from 'date-fns';
 import { enUS, zhCN, zhTW } from 'date-fns/locale';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { ChevronDown } from 'react-feather';
+import { XCircle } from 'react-feather';
 import { useTranslation } from 'react-i18next';
 import { useSortBy, useTable } from 'react-table';
 
+import { State } from '~/store/types';
+
+import * as connAPI from '../api/connections';
 import prettyBytes from '../misc/pretty-bytes';
+import { getClashAPIConfig } from '../store/app';
 import s from './ConnectionTable.module.scss';
-
-const sortDescFirst = true;
-
-const columns = [
-  { accessor: 'id', show: false },
-  { Header: 'c_type', accessor: 'type' },
-  { Header: 'c_process', accessor: 'process' },
-  { Header: 'c_host', accessor: 'host' },
-  { Header: 'c_rule', accessor: 'rule' },
-  { Header: 'c_chains', accessor: 'chains' },
-  { Header: 'c_time', accessor: 'start' },
-  { Header: 'c_dl_speed', accessor: 'downloadSpeedCurr', sortDescFirst },
-  { Header: 'c_ul_speed', accessor: 'uploadSpeedCurr', sortDescFirst },
-  { Header: 'c_dl', accessor: 'download', sortDescFirst },
-  { Header: 'c_ul', accessor: 'upload', sortDescFirst },
-  { Header: 'c_source', accessor: 'source' },
-  { Header: 'c_destination_ip', accessor: 'destinationIP' },
-  { Header: 'c_sni', accessor: 'sniffHost' },
-];
-
-function renderCell(cell: { column: { id: string }; value: number }, locale: Locale) {
-  switch (cell.column.id) {
-    case 'start':
-      return formatDistance(cell.value, 0, { locale: locale });
-    case 'download':
-    case 'upload':
-      return prettyBytes(cell.value);
-    case 'downloadSpeedCurr':
-    case 'uploadSpeedCurr':
-      return prettyBytes(cell.value) + '/s';
-    default:
-      return cell.value;
-  }
-}
+import MOdalCloseConnection from './ModalCloseAllConnections';
+import { connect } from './StateProvider';
 
 const sortById = { id: 'id', desc: true };
-const tableState = {
-  sortBy: [
-    // maintain a more stable order
-    sortById,
-  ],
-  hiddenColumns: ['id'],
-};
 
-function Table({ data }) {
-  const { getTableProps, headerGroups, rows, prepareRow } = useTable(
+function Table({ data, columns, hiddenColumns, apiConfig }) {
+  const [operationId, setOperationId] = useState('');
+  const [showModalDisconnect, setShowModalDisconnect] = useState(false);
+  const tableState = {
+    sortBy: [
+      // maintain a more stable order
+      sortById,
+    ],
+    hiddenColumns,
+  };
+  const table = useTable(
     {
       columns,
       data,
@@ -63,6 +40,11 @@ function Table({ data }) {
     useSortBy
   );
 
+  const { getTableProps, setHiddenColumns, headerGroups, rows, prepareRow } = table;
+
+  useEffect(() => {
+    setHiddenColumns(hiddenColumns);
+  }, [setHiddenColumns, hiddenColumns]);
   const { t, i18n } = useTranslation();
 
   let locale: Locale;
@@ -75,50 +57,99 @@ function Table({ data }) {
     locale = enUS;
   }
 
-  return (
-    <div {...getTableProps()}>
-      {headerGroups.map((headerGroup) => {
-        return (
-          <div {...headerGroup.getHeaderGroupProps()} className={s.tr}>
-            {headerGroup.headers.map((column, index) => (
-              <div
-                {...column.getHeaderProps(column.getSortByToggleProps())}
-                className={index == 0 || (index >= 5 && index < 10) ? s.thdu : s.th}
-              >
-                <span>{t(column.render('Header'))}</span>
-                <span className={s.sortIconContainer}>
-                  {column.isSorted ? (
-                    <span className={column.isSortedDesc ? '' : s.rotate180}>
-                      <ChevronDown size={16} />
-                    </span>
-                  ) : null}
-                </span>
-              </div>
-            ))}
+  const disconnectOperation = () => {
+    connAPI.closeConnById(apiConfig, operationId);
+    setShowModalDisconnect(false);
+  };
 
-            {rows.map((row, i) => {
-              prepareRow(row);
-              return row.cells.map((cell, j) => {
-                return (
-                  <div
-                    {...cell.getCellProps()}
-                    className={cx(
-                      s.td,
-                      i % 2 === 0 ? s.odd : false,
-                      j == 0 || (j >= 5 && j < 10) ? s.center : true
-                      // j ==1 ? s.break : true
-                    )}
-                  >
-                    {renderCell(cell, locale)}
-                  </div>
-                );
-              });
-            })}
-          </div>
+  const handlerDisconnect = (id) => {
+    setOperationId(id);
+    setShowModalDisconnect(true);
+  };
+
+  const renderCell = (
+    cell: { column: { id: string }; row: { original: { id: string } }; value: number },
+    locale: Locale
+  ) => {
+    switch (cell.column.id) {
+      case 'ctrl':
+        return (
+          <XCircle
+            style={{ cursor: 'pointer' }}
+            onClick={() => handlerDisconnect(cell.row.original.id)}
+          ></XCircle>
         );
-      })}
+      case 'start':
+        return formatDistance(cell.value, 0, { locale: locale });
+      case 'download':
+      case 'upload':
+        return prettyBytes(cell.value);
+      case 'downloadSpeedCurr':
+      case 'uploadSpeedCurr':
+        return prettyBytes(cell.value) + '/s';
+      default:
+        return cell.value;
+    }
+  };
+
+  return (
+    <div style={{ marginTop: '5px' }}>
+      <table {...getTableProps()} className={cx(s.table, 'connections-table')}>
+        <thead>
+          {headerGroups.map((headerGroup, trindex) => {
+            return (
+              <tr {...headerGroup.getHeaderGroupProps()} className={s.tr} key={trindex}>
+                {headerGroup.headers.map((column) => (
+                  <th {...column.getHeaderProps(column.getSortByToggleProps())} className={s.th}>
+                    <span>{t(column.render('Header'))}</span>
+                    {column.id !== 'ctrl' ? (
+                      <span className={s.sortIconContainer}>
+                        {column.isSorted ? (
+                          <ChevronDown
+                            size={16}
+                            className={column.isSortedDesc ? '' : s.rotate180}
+                          />
+                        ) : null}
+                      </span>
+                    ) : null}
+                  </th>
+                ))}
+              </tr>
+            );
+          })}
+        </thead>
+        <tbody>
+          {rows.map((row, i) => {
+            prepareRow(row);
+            return (
+              <tr className={s.tr} key={i}>
+                {row.cells.map((cell) => {
+                  return (
+                    <td
+                      {...cell.getCellProps()}
+                      className={cx(s.td, i % 2 === 0 ? s.odd : false, cell.column.id)}
+                    >
+                      {renderCell(cell, locale)}
+                    </td>
+                  );
+                })}
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+      <MOdalCloseConnection
+        confirm={'disconnect'}
+        isOpen={showModalDisconnect}
+        onRequestClose={() => setShowModalDisconnect(false)}
+        primaryButtonOnTap={disconnectOperation}
+      ></MOdalCloseConnection>
     </div>
   );
 }
 
-export default Table;
+const mapState = (s: State) => ({
+  apiConfig: getClashAPIConfig(s),
+});
+
+export default connect(mapState)(Table);
